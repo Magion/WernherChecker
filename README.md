@@ -1,0 +1,4 @@
+WernherChecker
+==============
+
+Plugin for KSP
