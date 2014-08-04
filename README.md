@@ -7,9 +7,10 @@ Are annoyed by constant forgotting of solar panels, parachutes, antennas or by m
 
 It's fully customizable, so if you install new mod, which uses different PartModules, you can easily edit the configuration file.
 
-So, nicely summarized features:
-*Customizable
-*Reminder to check crew assignment before launch
-*Multiple checklists for different types of crafts
-*Option to switch between checklists during construction
-*Minimizable window via button in Stock or Blizzy78's toolbar
+So, nicely summarized features
+
+- Customizable
+- Reminder to check crew assignment before launch
+- Multiple checklists for different types of crafts
+- Option to switch between checklists during construction
+- Minimizable window via button in Stock or Blizzy78's toolbar
