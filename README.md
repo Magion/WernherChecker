@@ -7,7 +7,7 @@ Are annoyed by constant forgotting of solar panels, parachutes, antennas or by m
 
 It's fully customizable, so if you install new mod, which uses different PartModules, you can easily edit the configuration file.
 
-###So, nicely summarized features
+###So, nicely summarized
 
 - Customizable
 - Reminder to check crew assignment before launch
