@@ -17,6 +17,7 @@ namespace WernherChecker
 
         public void Load()
         {
+            Debug.Log("[WernherChecker]: ========= Loading Settings =========");
             if (System.IO.File.Exists(WernherChecker.DataPath + "WernherChecker.cfg"))
             {
                 cfg = ConfigNode.Load(WernherChecker.DataPath + "WernherChecker.cfg");
