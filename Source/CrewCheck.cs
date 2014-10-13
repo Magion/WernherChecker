@@ -9,7 +9,7 @@ namespace WernherChecker
         static Rect launchBlock = new Rect(Screen.width - 97, 0, 50, 43);
         static Rect crewWindow = new Rect(0, 0, 100, 50);
         static bool crewWindowDisplayed = false;
-        static bool launchBlocked;
+        static bool launchBlocked = false;
         static GUIStyle buttonStyle = new GUIStyle(HighLogic.Skin.button);
         static bool isManned = false;
         static bool launchAllowed = true;
@@ -43,6 +43,7 @@ namespace WernherChecker
                     {
                         Debug.Log("[WernherChecker] Displayng CrewCheck window");
                         RenderingManager.AddToPostDrawQueue(54, DrawWindow);
+                        EditorLogic.fetch.Lock(true, true, true, "WernherChecker_crewCheck");
                         crewWindowDisplayed = true;
                     }
                 }
@@ -73,6 +74,7 @@ namespace WernherChecker
             {
                 RenderingManager.RemoveFromPostDrawQueue(54, DrawWindow);
                 crewWindowDisplayed = false;
+                EditorLogic.fetch.Unlock("WernherChecker_crewCheck");
                 Debug.Log("[WernherChecker] Launching vessel!");
                 EditorLogic.fetch.launchVessel();
             }
@@ -81,7 +83,7 @@ namespace WernherChecker
                 RenderingManager.RemoveFromPostDrawQueue(54, DrawWindow);
                 crewWindowDisplayed = false;
                 EditorLogic.fetch.SelectPanelCrew();
-                WernherChecker.minimized = true;
+                EditorLogic.fetch.Unlock("WernherChecker_crewCheck");
             }
         }
     }
