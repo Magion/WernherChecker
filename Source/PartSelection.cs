@@ -15,7 +15,6 @@ namespace WernherChecker
 
         public void Update(Vector2 mousePos)
         {
-
             if (Input.GetMouseButtonDown(0))
             {
                 startClick = mousePos;
