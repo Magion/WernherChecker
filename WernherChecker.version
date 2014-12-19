@@ -2,6 +2,7 @@
 	"NAME":"WernherChecker",
 	"URL":"https://raw.githubusercontent.com/Magion/WernherChecker/master/WernherChecker.version",
 	"DOWNLOAD":"http://kerbalstuff.com/mod/91/WernherChecker",
+	"CHANGE_LOG_URL":"https://raw.githubusercontent.com/Magion/WernherChecker/master/changelog.txt",
 	"VERSION":
 	{
 		"MAJOR":0,
