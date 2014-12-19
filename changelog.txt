@@ -1,0 +1,65 @@
+------------ Version v0.3.1 (Oct. 13) ------------
+* KSP 0.25 support
+* Added button to reload the config file
+* Main window automaticly hides, when switched to the Action Groups or Crew Assignment panel
+* Editor locks, when the CrewCheck window is displayed
+* Minor visual changes
+* Added some new PartModule definitions
+
+------------- Version v0.3 (Aug. 25) -------------
+* Fixed issue, where crewed vessel could be launched, even though it was blocked by editor
+* Improved locking mechanism of editor
+* Fixed issue, where the stock AppButton wasn't destroyed, when blizzy78's toolbar was not available, but it was set in settings
+* Rewritten code ensuring loading and handling of checklists => changed cfg structure
+* Better look of the main window
+* Support of KSP-AVC
+* Added indicator of the current checklist
+* Option to select only certain parts for checking
+* Various tweaks
+
+-------------- Version v0.2 (Aug. 4)--------------
+* Ensured 0.24.2 compatibility
+* Multiple checklists support
+* Option to change checklist during construction
+* Various tweaks and minor improvements
+* [internal] Rewrite of the code ensuring checklist loading and managing
+* [other] Source code is accesible at GitHub
+* [other] Available for download at KerbalStuff, GitHub and CurseForge
+
+------------ Version v0.1.6.1 (Apr. 10)------------
+* Recompiled for 0.23.5
+* Checking for ModuleEnginesFX by default
+
+------------- Version v0.1.6 (Mar. 17)-------------
+* Checking of the crew assignment before launch
+
+------------- Version v0.1.5 (Mar. 13)-------------
+* Added availability in SPH
+* Hovering over the window will lock the editor
+* Renamed config file
+* Small code optimisation
+
+------------ Version v0.1.4.1 (Feb. 24)------------
+* Jeb's suggestion can be disabled via config
+
+-------------- Version v0.1.4 (Feb. 3)-------------
+* Rewritten code ensuring checking for PartModules, so number of a PartModules linked to one item is no longer limited 
+
+------------- Version v0.1.3 (Jan. 27)-------------
+* Window uses button in blizzy78's Toolbar for minimizing
+* Error message, if modules.cfg is missing
+
+------------- Version v0.1.2 (Jan. 13)-------------
+* Checklist is now configurable by the .cfg file
+* Protection of the window before dragging out of the screen is smoother
+
+------------- Version v0.1.1 (Dec. 30)-------------
+* Window is now minimizable by button in lower left corner
+* Window will come back when it will be draged out of the screen
+
+------------ Version v0.1.0.1 (Dec. 26)------------
+* Fixed issue, where External Command Seat was not recognized as Control Source
+* RT2 compatibile
+
+-------------- Version v0.1 (Dec. 26)--------------
+* Initial release
