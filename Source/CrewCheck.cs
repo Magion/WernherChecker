@@ -6,18 +6,14 @@ namespace WernherChecker
 {
     class CrewCheck
     {
-        static Rect launchBlock = new Rect(Screen.width - 97, 0, 50, 43);
         static Rect crewWindow = new Rect(0, 0, 100, 50);
         static bool crewWindowDisplayed = false;
-        static bool launchBlocked = false;
         static GUIStyle buttonStyle = new GUIStyle(HighLogic.Skin.button);
         static bool isManned = false;
-        static bool launchAllowed = true;
-        
 
-        public static void CheckLaunchButton(Vector2 mousePos)
+        public static void OnButtonInput(ref POINTER_INFO ptr)
         {
-            if (EditorLogic.startPod != null)
+            if (ptr.evt == POINTER_INFO.INPUT_EVENT.TAP)
             {
                 isManned = false;
                 foreach (Part part in EditorLogic.SortedShipList)
@@ -25,40 +21,18 @@ namespace WernherChecker
                     if (part.CrewCapacity > 0)
                         isManned = true;
                 }
-            }
-
-            foreach (string lockKey in InputLockManager.lockStack.Keys)
-            {
-                if (InputLockManager.GetControlLock(lockKey) == ControlTypes.EDITOR_LAUNCH && lockKey != "WernherChecker_launchBlock")
-                    launchAllowed = false;
-                else
-                    launchAllowed = true;
-            }
-
-            if (launchBlock.Contains(mousePos) && EditorLogic.startPod != null && isManned && !InputLockManager.lockStack.ContainsKey("EditorLogic_launchSequence") && launchAllowed)
-            {
-                if (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1))
+                if (isManned)
                 {
                     if (!crewWindowDisplayed)
                     {
-                        Debug.Log("[WernherChecker] Displayng CrewCheck window");
+                        Debug.Log("[WernherChecker] Displaying CrewCheck window");
                         RenderingManager.AddToPostDrawQueue(54, DrawWindow);
                         EditorLogic.fetch.Lock(true, true, true, "WernherChecker_crewCheck");
                         crewWindowDisplayed = true;
                     }
                 }
-
-                if (!launchBlocked)
-                {
-                    InputLockManager.SetControlLock(ControlTypes.EDITOR_LAUNCH, "WernherChecker_launchBlock");
-                    launchBlocked = true;
-                }
-            }
-
-            if (!launchBlock.Contains(mousePos) && launchBlocked)
-            {
-                InputLockManager.RemoveControlLock("WernherChecker_launchBlock");
-                launchBlocked = false;
+                else
+                    EditorLogic.fetch.launchVessel();   
             }
         }
 
@@ -86,5 +60,5 @@ namespace WernherChecker
                 EditorLogic.fetch.Unlock("WernherChecker_crewCheck");
             }
         }
-    }
+    }        
 }
