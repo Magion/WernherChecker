@@ -1,3 +1,8 @@
+------------ Version v0.3.2 (Dec. 27) ------------
+* KSP 0.90 support
+* Added saving of the window's position
+* Improved launch button hook for the crew-checking feature
+
 ------------ Version v0.3.1 (Oct. 13) ------------
 * KSP 0.25 support
 * Added button to reload the config file
