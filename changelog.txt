@@ -2,6 +2,7 @@
 * KSP 0.90 support
 * Added saving of the window's position
 * Improved launch button hook for the crew-checking feature
+* Default AntennaRange support
 
 ------------ Version v0.3.1 (Oct. 13) ------------
 * KSP 0.25 support
