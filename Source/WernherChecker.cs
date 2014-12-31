@@ -1,6 +1,6 @@
 /*
  * License: The MIT License (MIT)
- * Version: v0.3.2
+ * Version: v0.3.3
  * 
  * Minimizing button powered by awesome Toolbar Plugin - http://forum.kerbalspaceprogram.com/threads/60863 by blizzy78
  */
@@ -39,6 +39,7 @@ namespace WernherChecker
         Dictionary<string, List<string>> itemModules = new Dictionary<string, List<string>>();
 
         //Other
+        bool KCTInstalled = false;
         toolbarType activeToolbar;
         public static string DataPath = KSPUtil.ApplicationRootPath + "GameData/WernherChecker/Data/";
         IButton wcbutton;
@@ -60,14 +61,23 @@ namespace WernherChecker
         
         public void Start()
         {
-            Debug.LogWarning("WernherChecker v0.3.2 has been loaded");
+            Debug.LogWarning("WernherChecker v0.3.3 has been loaded");
             if (Settings.Load())
             {
                 mainWindow.x = Settings.windowX;
                 mainWindow.y = Settings.windowY;
             }
 
-            if (Settings.checkCrewAssignment)
+            foreach (AssemblyLoader.LoadedAssembly assebmly in AssemblyLoader.loadedAssemblies)
+                if (assebmly.dllName == "KerbalConstructionTime")
+                {
+                    KCTInstalled = true;
+                    break;
+                }
+                else
+                    KCTInstalled = false;
+
+            if (Settings.checkCrewAssignment && !KCTInstalled)
                 EditorLogic.fetch.launchBtn.SetInputDelegate(new EZInputDelegate(CrewCheck.OnButtonInput));
 
             if (Settings.wantedToolbar == toolbarType.BLIZZY && ToolbarManager.ToolbarAvailable)
@@ -83,7 +93,7 @@ namespace WernherChecker
             {
                 activeToolbar = toolbarType.STOCK;
                 GameEvents.onGUIApplicationLauncherReady.Add(onAppLauncherReady);
-                GameEvents.onGUIApplicationLauncherDestroyed.Add(onAppLauncherDestroyed);
+                GameEvents.onGUIApplicationLauncherUnreadifying.Add(onAppLauncherUnreadifying);
             }  
         }
 
@@ -106,11 +116,11 @@ namespace WernherChecker
             appButton.SetTrue();
         }
 
-        void onAppLauncherDestroyed()
+        void onAppLauncherUnreadifying(GameScenes gameScenes)
         {
             ApplicationLauncher.Instance.RemoveModApplication(appButton);
             GameEvents.onGUIApplicationLauncherReady.Remove(onAppLauncherReady);
-            GameEvents.onGUIApplicationLauncherDestroyed.Remove(onAppLauncherDestroyed);
+            GameEvents.onGUIApplicationLauncherUnreadifying.Remove(onAppLauncherUnreadifying);
         }
 
         void BlizzyMinimize()
@@ -157,7 +167,7 @@ namespace WernherChecker
             mousePos = Input.mousePosition;
             mousePos.y = Screen.height - mousePos.y;
             if (!minimized)
-                mainWindow = GUILayout.Window(52, mainWindow, OnWindow, "WernherChecker v0.3.2", windowStyle);
+                mainWindow = GUILayout.Window(52, mainWindow, OnWindow, "WernherChecker v0.3.3", windowStyle);
             mainWindow.x = Mathf.Clamp(mainWindow.x, 0, Screen.width - mainWindow.width);
             mainWindow.y = Mathf.Clamp(mainWindow.y, 0, Screen.height - mainWindow.height);
             if (partSelection != null && selectionInProgress)
