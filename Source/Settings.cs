@@ -9,13 +9,24 @@ namespace WernherChecker
     class WCSettings
     {
         public ConfigNode cfg;
-        public bool cfgLoaded = false;
-        public bool lockOnHover = true;
-        public bool checkCrewAssignment = true;
-        public bool jebEnabled = true;
-        public float windowX = EditorPanels.Instance.partsPanelWidth + 3;
-        public float windowY = 120;
+        public bool cfgLoaded;
+        public bool lockOnHover;
+        public bool checkCrewAssignment;
+        public bool jebEnabled;
+        public float windowX;
+        public float windowY;
         public WernherChecker.toolbarType wantedToolbar;
+
+        public WCSettings()
+        {
+            cfgLoaded = false;
+            lockOnHover = true;
+            checkCrewAssignment = true;
+            jebEnabled = true;
+            windowX = EditorPanels.Instance.partsPanelWidth + 3;
+            windowY = 120;
+            wantedToolbar = WernherChecker.toolbarType.STOCK;
+        }
 
         public bool Load()
         {
@@ -83,12 +94,22 @@ namespace WernherChecker
             Debug.Log("[WernherChecker]: ========= Saving Settings =========");
             if (CfgExists() && cfgLoaded)
             {
-                //cfg.SetValue("j_sugg", j_sugg.ToString());
-                //cfg.SetValue("lockOnHover", lockOnHover.ToString());
-                //cfg.SetValue("checkCrewAssignment", checkCrewAssignment.ToString());
-                //cfg.SetValue("toolbarType", wantedToolbar.ToString());
+                if (cfg.HasValue("lockOnHover"))
+                    cfg.SetValue("lockOnHover", this.lockOnHover.ToString());
+                else
+                    cfg.AddValue("lockOnHover", this.lockOnHover.ToString());
                 //--------------------------------------------------------------------------
-                if(cfg.HasValue("windowX"))
+                if (cfg.HasValue("checkCrewAssignment"))
+                    cfg.SetValue("checkCrewAssignment", this.checkCrewAssignment.ToString());
+                else
+                    cfg.AddValue("checkCrewAssignment", this.checkCrewAssignment.ToString());
+                //--------------------------------------------------------------------------
+                if (cfg.HasValue("toolbarType"))
+                    cfg.SetValue("toolbarType", WernherChecker.activeToolbar.ToString());
+                else
+                    cfg.AddValue("toolbarType", WernherChecker.activeToolbar.ToString());
+                //--------------------------------------------------------------------------
+                if (cfg.HasValue("windowX"))
                     cfg.SetValue("windowX", WernherChecker.mainWindow.x.ToString());
                 else
                     cfg.AddValue("windowX", WernherChecker.mainWindow.x.ToString());
