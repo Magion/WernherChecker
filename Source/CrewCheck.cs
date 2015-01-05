@@ -1,64 +1,64 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using PreFlightTests;
 
 namespace WernherChecker
 {
-    class CrewCheck
+    class CrewCheck : IPreFlightTest
     {
-        static Rect crewWindow = new Rect(0, 0, 100, 50);
-        static bool crewWindowDisplayed = false;
-        static GUIStyle buttonStyle = new GUIStyle(HighLogic.Skin.button);
-        static bool isManned = false;
+        static PreFlightCheck checks;
 
         public static void OnButtonInput(ref POINTER_INFO ptr)
         {
             if (ptr.evt == POINTER_INFO.INPUT_EVENT.TAP)
             {
-                isManned = false;
-                foreach (Part part in EditorLogic.SortedShipList)
-                {
-                    if (part.CrewCapacity > 0)
-                        isManned = true;
-                }
-                if (isManned)
-                {
-                    if (!crewWindowDisplayed)
-                    {
-                        Debug.Log("[WernherChecker] Displaying CrewCheck window");
-                        RenderingManager.AddToPostDrawQueue(54, DrawWindow);
-                        EditorLogic.fetch.Lock(true, true, true, "WernherChecker_crewCheck");
-                        crewWindowDisplayed = true;
-                    }
-                }
-                else
-                    EditorLogic.fetch.launchVessel();   
+                checks = new PreFlightCheck(Complete, Abort);
+                checks.AddTest(new CrewCheck());
+                checks.RunTests();
             }
         }
-
-        static void DrawWindow()
+       
+        public bool Test()
         {
-            crewWindow = GUILayout.Window(54, crewWindow, Window, "Have you checked the crew assignment?", GUILayout.Width(300f));
-            crewWindow.center = new Vector2(Screen.width / 2, Screen.height / 2);
+            foreach (Part part in EditorLogic.SortedShipList)
+            {
+                if (part.CrewCapacity > 0)
+                    return false;
+            }
+            return true;
         }
 
-        static void Window(int WindowID)
+        public string GetWarningTitle()
         {
-            if (GUILayout.Button("Yes, I have. Go for LAUNCH!", buttonStyle))
-            {
-                RenderingManager.RemoveFromPostDrawQueue(54, DrawWindow);
-                crewWindowDisplayed = false;
-                EditorLogic.fetch.Unlock("WernherChecker_crewCheck");
-                Debug.Log("[WernherChecker] Launching vessel!");
-                EditorLogic.fetch.launchVessel();
-            }
-            if (GUILayout.Button("No, I haven't! Thanks for the reminder!", buttonStyle))
-            {
-                RenderingManager.RemoveFromPostDrawQueue(54, DrawWindow);
-                crewWindowDisplayed = false;
-                EditorLogic.fetch.SelectPanelCrew();
-                EditorLogic.fetch.Unlock("WernherChecker_crewCheck");
-            }
+            return "Warning: Crew Assignment";
+        }
+
+        public string GetWarningDescription()
+        {
+            return "Have you checked the crew assignment?";
+        }
+
+        public string GetProceedOption()
+        {
+            return "Yes, I have. Go for LAUNCH!";
+        }
+
+        public string GetAbortOption()
+        {
+            return "No, I haven't! Thanks for the reminder!";
+        }
+
+        public static void Complete()
+        {
+            Debug.Log("[WernherChecker]: Crew is OK, launching vessel.");
+            EditorLogic.fetch.launchVessel();
+        }
+
+        public static void Abort()
+        {
+            Debug.Log("[WernherChecker]: Showing crew panel.");
+            EditorLogic.fetch.SelectPanelCrew();
         }
     }        
 }
