@@ -14,3 +14,5 @@ It's fully customizable, so if you install new mod, which uses different PartMod
 - Multiple checklists for different types of crafts
 - Option to switch between checklists during construction
 - Minimizable window via button in Stock or Blizzy78's toolbar
+
+Learn more at the [forum thread] (http://forum.kerbalspaceprogram.com/threads/63591)!
