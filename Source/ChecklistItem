@@ -1,0 +1,89 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using UnityEngine;
+
+namespace WernherChecker
+{
+    public class ChecklistItem
+    {
+        public WernherChecker MainInstance
+        {
+            get { return WernherChecker.Instance; }
+        }
+        public Checklist activeChecklist
+        {
+            get { return MainInstance.checklistSystem.activeChecklist; }
+        }
+        public ChecklistSystem checklistsInstance
+        {
+            get { return MainInstance.checklistSystem; }
+        }
+        //GUIStyle
+        public GUIStyle labelStyle = new GUIStyle(HighLogic.Skin.label);
+        public static GUIStyle checkboxStyle = new GUIStyle(HighLogic.Skin.toggle)
+        {
+            active = HighLogic.Skin.toggle.normal,
+            hover = HighLogic.Skin.toggle.normal,
+            focused = HighLogic.Skin.toggle.normal,
+            onActive = HighLogic.Skin.toggle.onNormal,
+            onFocused = HighLogic.Skin.toggle.onNormal,
+            onHover = HighLogic.Skin.toggle.onNormal
+        };
+        public static GUIStyle settingsButtonStyle = new GUIStyle(HighLogic.Skin.button)
+        {
+            alignment = TextAnchor.MiddleCenter,
+            padding = new RectOffset(2, 2, 2, 2),
+            fixedHeight = WernherChecker.buttonStyle.CalcSize(new GUIContent("abc")).y,
+            fixedWidth = WernherChecker.buttonStyle.CalcSize(new GUIContent("abc")).x
+
+        };
+
+
+        public string name;
+        public bool state;
+        public bool isManual;
+        public bool paramsDisplayed;
+        public List<Criterion> criteria;
+
+        public void DrawItem()
+        {
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(isManual ? "<color=#0099ffff>" + name + "</color>" : name, labelStyle);
+            GUILayout.FlexibleSpace();
+            if (criteria.Any(c => c.hasParameter))
+            {
+                if (GUILayout.Toggle(paramsDisplayed, new GUIContent(WernherChecker.settingsTexture, "Modify parameters"), settingsButtonStyle) != paramsDisplayed)
+                {
+                    if (paramsDisplayed)
+                    {
+                        activeChecklist.items.ForEach(p => p.paramsDisplayed = false);
+                    }
+                    else
+                    {
+                        activeChecklist.items.ForEach(p => p.paramsDisplayed = false);
+                        activeChecklist.items.ForEach(p => p.criteria.ForEach(c => c.tempParam = c.parameter));
+                        paramsDisplayed = true;
+                    }
+                    checklistsInstance.paramsWindow.height = 0f;
+                }
+                if (paramsDisplayed)
+                {
+                    if (Event.current.type == EventType.Repaint)
+                        checklistsInstance.paramsWindow.y = MainInstance.mainWindow.y + GUILayoutUtility.GetLastRect().y - 28;
+                    checklistsInstance.paramsWindow.x = MainInstance.mainWindow.x - checklistsInstance.paramsWindow.width;
+
+                    //checklistsInstance.paramsWindow = GUILayout.Window(3, checklistsInstance.paramsWindow, checklistsInstance.DrawParamsWindow, "Edit Parameters          >", HighLogic.Skin.window);
+                }
+            }
+            if (!isManual)
+                GUILayout.Toggle(state, "", checkboxStyle);
+            else
+                state = GUILayout.Toggle(state, "", HighLogic.Skin.toggle);
+            GUILayout.EndHorizontal();
+        }
+
+
+    }
+}
