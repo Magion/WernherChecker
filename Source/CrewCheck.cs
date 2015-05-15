@@ -21,12 +21,15 @@ namespace WernherChecker
        
         public bool Test()
         {
-            foreach (Part part in EditorLogic.SortedShipList)
-            {
-                if (part.CrewCapacity > 0)
-                    return false;
-            }
-            return true;
+            if (EditorLogic.fetch.editorScreen == EditorScreen.Crew)
+                return true;
+
+                foreach (Part part in EditorLogic.SortedShipList)
+                {
+                    if (part.CrewCapacity > 0)
+                        return false;
+                }
+                return true;
         }
 
         public string GetWarningTitle()
