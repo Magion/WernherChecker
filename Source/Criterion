@@ -1,0 +1,66 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using UnityEngine;
+
+namespace WernherChecker
+{
+    public enum CriterionType
+    {
+        Module,
+        MinResourceLevel,
+        MinResourceCapacity,
+        Part,
+        ContractRequirements
+    }
+
+    public class Criterion
+    {
+
+        public WernherChecker MainInstance
+        {
+            get { return WernherChecker.Instance; }
+        }
+        public Checklist activeChecklist
+        {
+            get { return MainInstance.checklistSystem.activeChecklist; }
+        }
+
+        public CriterionType type;
+        public bool met;
+        public Func<Criterion, object> paramsGUIAction;
+        public object parameter;
+        public object tempParam;
+        public Type parameterType;
+        public bool hasParameter;
+        public bool paramValid;
+        public string resourceName;
+        public List<string> parts;
+        public List<string> modules;
+
+
+        public Criterion(CriterionType type)
+        {
+            this.type = type;
+            if (type == CriterionType.Part || type == CriterionType.Module || type == CriterionType.MinResourceLevel || type == CriterionType.MinResourceCapacity)
+            {
+                paramsGUIAction = ChecklistSystem.ParamsTextField;
+                parameter = 1;
+                tempParam = 1;
+                parameterType = typeof(int);
+                hasParameter = true;
+            }
+
+            /*else if (type == CriterionType.ContractRequirements)
+            {
+                parameterType = typeof(Contracts.Contract);
+                hasParameter = true;
+                paramsGUIAction = Checklists.ParamsContractSelect;
+                parameter = Contracts.ContractSystem.Instance.GetCurrentActiveContracts<Contracts.Contract>().DefaultIfEmpty(new Contracts.Contract()).First();
+                tempParam = parameter;
+
+            }*/
+        }
+    }
+}
