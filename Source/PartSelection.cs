@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace WernherChecker
 {
-    class PartSelection
+    public class PartSelection
     {
         public Vector2 startClick = -Vector2.one;
         public Rect selection;
@@ -35,7 +35,7 @@ namespace WernherChecker
                 startClick = -Vector2.one;
             }
 
-            if (Input.GetMouseButton(0) && !WernherChecker.mainWindow.Contains(mousePos))
+            if (Input.GetMouseButton(0) && !WernherChecker.Instance.mainWindow.Contains(mousePos))
             {
                 selection = new Rect(startClick.x, startClick.y, mousePos.x - startClick.x, mousePos.y - startClick.y);
 
