@@ -1,3 +1,13 @@
+------------- Version v0.3 (......) -------------
+* KSP 1.0 support
+* Added checking for minimal resource capacity, current resource amount and part presence
+* Added criterion's parameters in-game editing
+* Preformance increase - checking only on vessel change
+* CrewCheck test is PASS, if EditorPanel.Crew is dipslayed
+* Improved window's heigh calculations
+* Toolbar setting label shows the current state
+* Added "Try again" button when no valid checklists are found
+
 ------------ Version v0.3.4 (Jan. 5) ------------
 * Added in-game settings
 * Fixed an issue causing the game to go crazy after launching an unmanned ship
