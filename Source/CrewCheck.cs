@@ -27,7 +27,10 @@ namespace WernherChecker
                 foreach (Part part in EditorLogic.SortedShipList)
                 {
                     if (part.CrewCapacity > 0)
+                    {
+                        EditorLogic.fetch.Lock(true, true, true, "WernherChecker_crewCheck");
                         return false;
+                    }
                 }
                 return true;
         }
@@ -55,12 +58,14 @@ namespace WernherChecker
         public static void Complete()
         {
             Debug.Log("[WernherChecker]: Crew is OK, launching vessel.");
+            EditorLogic.fetch.Unlock("WernherChecker_crewCheck");
             EditorLogic.fetch.launchVessel();
         }
 
         public static void Abort()
         {
             Debug.Log("[WernherChecker]: Showing crew panel.");
+            EditorLogic.fetch.Unlock("WernherChecker_crewCheck");
             EditorLogic.fetch.SelectPanelCrew();
         }
     }        
