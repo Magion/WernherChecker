@@ -13,11 +13,21 @@ namespace WernherChecker
         {
             get { return WernherChecker.Instance; }
         }
+        public Checklist ActiveChecklist
+        {
+            get
+            {
+                if (activeChecklist == null)
+                    return new Checklist();
+                else
+                    return activeChecklist;
+            }
+            set { activeChecklist = value; }
+        }
 
         public List<Checklist> availableChecklists = new List<Checklist>();
-        public Checklist activeChecklist;
+        Checklist activeChecklist;
         public Rect paramsWindow = new Rect(0, 0, 200, 0);
-        public static Rect paramEditor = new Rect(0, 0, 200, 20);
         public List<Part> partsToCheck;
 
         //GUIStyles
@@ -48,38 +58,14 @@ namespace WernherChecker
                             parsedItem.criteria = new List<Criterion>();
                             parsedItem.name = itemNode.GetValue("name");
                             bool.TryParse(itemNode.GetValue("isManual"), out parsedItem.isManual);
+                            bool.TryParse(itemNode.GetValue("allRequired"), out parsedItem.allRequired);
 
                             //Begining criterion cycle
                             foreach (ConfigNode criterionNode in itemNode.GetNodes("CRITERION"))
                             {
                                 //Debug.Log("parsing criterion of type " + criterionNode.GetValue("type"));
-                                Criterion parsedCriterion = new Criterion((CriterionType)Enum.Parse(typeof(CriterionType), criterionNode.GetValue("type")));
-                                if (criterionNode.HasValue("defaultParameter"))
-                                {
-                                    int i;
-                                    if (int.TryParse(criterionNode.GetValue("defaultParameter"), out i))
-                                    {
-                                        parsedCriterion.parameter = criterionNode.GetValue("defaultParameter");
-                                        parsedCriterion.tempParam = parsedCriterion.parameter;
-                                    }
-                                }
-                                switch (parsedCriterion.type)
-                                {
-                                    case CriterionType.Module:
-                                        parsedCriterion.modules = criterionNode.GetValue("modules").Trim().Split(',').ToList<string>();
-                                        break;
-
-                                    case CriterionType.Part:
-                                        parsedCriterion.parts = criterionNode.GetValue("parts").Trim().Split(',').ToList<string>();
-                                        break;
-
-                                    case CriterionType.MinResourceLevel:
-                                    case CriterionType.MinResourceCapacity:
-                                        parsedCriterion.resourceName = criterionNode.GetValue("resourceName");
-                                        break;
-                                    case CriterionType.ContractRequirements:
-                                        break;
-                                }
+                                Criterion parsedCriterion = new Criterion(criterionNode);
+                                
                                 parsedItem.criteria.Add(parsedCriterion);
                             }
                             parsedChecklist.items.Add(parsedItem);
@@ -97,12 +83,23 @@ namespace WernherChecker
             }
         }
 
+        public void CheckVessel()
+        {
+            CheckVessel(EditorLogic.fetch.ship);
+        }
+
         public void CheckVessel(ShipConstruct ship)
         {
             if (MainInstance.checkSelected && MainInstance.partSelection != null)
-                partsToCheck = MainInstance.partSelection.selectedParts;
+                partsToCheck = MainInstance.partSelection.selectedParts.Intersect(ship.Parts).ToList();
             else
                 partsToCheck = ship.Parts;
+
+            if (EditorLogic.RootPart == null)
+            {
+                activeChecklist.items.ForEach(i => i.state = false);
+                return;
+            }
 
             if (!MainInstance.checklistSelected)
                 return;
@@ -132,17 +129,20 @@ namespace WernherChecker
                         case CriterionType.MinResourceCapacity:
                             crton.met = CheckForResourceCapacity(crton);
                             break;
+                        case CriterionType.CrewMember:
+                            crton.met = CheckForCrewMember(crton);
+                            break;
                     }
                     item.criteria[i] = crton;
-
-                    if (!crton.met)
-                    {
-                        item.state = false;
-                        goto continueItemLoop;
-                    }
                 }
+                if (!item.allRequired)
+                {
+                    if (item.criteria.TrueForAll(c => !c.met))
+                        item.state = false;
+                }
+                else if (item.criteria.Any(c => !c.met))
+                    item.state = false;
 
-            continueItemLoop:
                 activeChecklist.items[j] = item;
                 continue;
             }
@@ -153,7 +153,7 @@ namespace WernherChecker
             int quantity = 0;
             foreach (string module in crton.modules)
             {
-                quantity += partsToCheck.Where(p => p.Modules.Contains(module) && EditorLogic.SortedShipList.Contains(p)).Count();
+                quantity += partsToCheck.Where(p => p.Modules.Contains(module)).Count();
             }
             if (quantity >= int.Parse(crton.parameter.ToString()))
                 return true;
@@ -166,7 +166,7 @@ namespace WernherChecker
             int quantity = 0;
             foreach (string part in crton.parts)
             {
-                quantity += partsToCheck.Where(p => p.name == part && EditorLogic.SortedShipList.Contains(p)).Count();
+                quantity += partsToCheck.Where(p => p.name == part).Count();
             }
             if (quantity >= int.Parse(crton.parameter.ToString()))
                 return true;
@@ -179,7 +179,7 @@ namespace WernherChecker
             double quantity = 0;
             foreach (Part part in partsToCheck.Where(p => p.Resources.Contains(crton.resourceName)))
             {
-                quantity += part.Resources.list.Find(r => r.resourceName == crton.resourceName && EditorLogic.SortedShipList.Contains(r.part)).amount;
+                quantity += part.Resources.list.Find(r => r.resourceName == crton.resourceName).amount;
             }
             if (quantity >= int.Parse(crton.parameter.ToString()))
                 return true;
@@ -192,7 +192,7 @@ namespace WernherChecker
             double quantity = 0;
             foreach (Part part in partsToCheck.Where(p => p.Resources.Contains(crton.resourceName)))
             {
-                quantity += part.Resources.list.Find(r => r.resourceName == crton.resourceName && EditorLogic.SortedShipList.Contains(r.part)).maxAmount;
+                quantity += part.Resources.list.Find(r => r.resourceName == crton.resourceName).maxAmount;
             }
             if (quantity >= int.Parse(crton.parameter.ToString()))
                 return true;
@@ -200,6 +200,27 @@ namespace WernherChecker
             return false;
         }
 
+        bool CheckForCrewMember(Criterion crton)
+        {
+            try
+            {
+                foreach (PartCrewManifest part in CMAssignmentDialog.Instance.GetManifest().GetCrewableParts().Where(p => partsToCheck.Exists(pt => pt.partInfo == p.PartInfo)))
+                {
+                    if (part.GetPartCrew().Any(c => c.experienceTrait.Title == crton.experienceTrait && c.experienceLevel >= int.Parse(crton.parameter.ToString())))
+                    {
+                        //Debug.Log("Crew OK");
+                        return true;
+                    }
+                }
+                //Debug.Log("Crew KO");
+                return false;
+            }
+            catch(Exception ex)
+            {
+                Debug.LogWarning("[WernherChecker]: Error checking crew:\n" + ex + "\n\n<color=lime><b>Please note, that this can sometimes happen after entering the editor and attaching the part for the first time</b></color>");
+                return false;
+            }
+        }
 
         public void DrawParamsWindow(int WindowID)
         {
@@ -210,7 +231,7 @@ namespace WernherChecker
             GUILayout.FlexibleSpace();
             GUILayout.Label("►");
             GUILayout.EndHorizontal();
-            item.criteria.ForEach(c => c.tempParam = c.paramsGUIAction(c));
+            item.criteria.ForEach(c => c.tempParam = c.paramsGUIFunction(c));
             /*for (int i = 0; i < item.criteria.Count; i++)
             {
                 Criterion crton = activeChecklist.items.Find(p => p.paramsDisplayed).criteria[i];
@@ -227,7 +248,7 @@ namespace WernherChecker
                     {
                         item.criteria[i].parameter = item.criteria[i].tempParam;
                     }*/
-                    CheckVessel(EditorLogic.fetch.ship);
+                    CheckVessel();
                 }
             }
             else
@@ -236,6 +257,7 @@ namespace WernherChecker
             }
             activeChecklist.items[activeChecklist.items.IndexOf(item)] = item;
             GUILayout.EndVertical();
+            MainInstance.SetTooltipText();
         }
 
         public static object ParamsTextField(Criterion crton)
@@ -246,7 +268,7 @@ namespace WernherChecker
             else
                 crton.paramValid = false;
             GUILayout.BeginHorizontal();
-            GUILayout.Label(crton.type.ToString() + " QTY", crton.paramValid ? normalLabel : orangeLabel);
+            GUILayout.Label(new GUIContent(crton.parameterText, crton.tooltip), crton.paramValid ? normalLabel : orangeLabel);
             GUILayout.FlexibleSpace();
             crton.tempParam = GUILayout.TextField(crton.tempParam.ToString(), 11, HighLogic.Skin.textField, GUILayout.Width(68f));
             GUILayout.EndHorizontal();
