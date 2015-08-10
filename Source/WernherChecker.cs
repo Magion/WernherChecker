@@ -2,10 +2,11 @@
  * License: The MIT License (MIT)
  * Version: v0.4
  * 
- * Minimizing button powered by awesome Toolbar Plugin - http://forum.kerbalspaceprogram.com/threads/60863 by blizzy78
+ * Minimizing button powered by awesome Toolbar Plugin - http://forum.kerbalspaceprogram.com/threads/60863 by blizzy78!
  */
 using System;
 using System.Collections;
+using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -28,8 +29,11 @@ namespace WernherChecker
         public bool checkSelected = false;
         bool selectedShowed = false;
         public PartSelection partSelection;
-        Dictionary<string, List<string>> itemModules = new Dictionary<string, List<string>>();
 
+        //Tooltips
+        public string globalTooltip = "";
+        public float hoverTime = 0f;
+        public string lastTooltip;
 
         //Other
         string defaultLaunchMethod;
@@ -42,9 +46,12 @@ namespace WernherChecker
         bool settings_LockWindow = true;
         public static string DataPath = KSPUtil.ApplicationRootPath + "GameData/WernherChecker/Data/";
         public static Texture2D settingsTexture = GameDatabase.Instance.GetTexture("WernherChecker/Data/settings", false);
+        public static Texture2D tooltipBGTexture = GameDatabase.Instance.GetTexture("WernherChecker/Data/tooltip_BG", false);
         IButton wcbutton;
         ApplicationLauncherButton appButton;
         public Vector2 mousePos = Input.mousePosition;
+
+        //Instances
         public WCSettings Settings = new WCSettings();
         public ChecklistSystem checklistSystem = new ChecklistSystem();
         public static WernherChecker Instance;
@@ -61,6 +68,14 @@ namespace WernherChecker
         public static GUIStyle buttonStyle = new GUIStyle(HighLogic.Skin.button);
         public static GUIStyle toggleStyle = new GUIStyle(HighLogic.Skin.toggle);
         public static GUIStyle labelStyle = new GUIStyle(HighLogic.Skin.label);
+        public static GUIStyle tooltipStyle = new GUIStyle(HighLogic.Skin.textArea)
+        {
+            padding = new RectOffset(4, 4, 4, 4),
+            border = new RectOffset(2, 2, 2, 2),
+            wordWrap = true,
+            alignment = TextAnchor.UpperLeft,
+            normal = { background = tooltipBGTexture },
+        };
 
         public void Start()
         {
@@ -75,6 +90,8 @@ namespace WernherChecker
             checklistSystem.LoadChecklists();
             GameEvents.onEditorScreenChange.Add(onEditorPanelChange);
             GameEvents.onEditorShipModified.Add(checklistSystem.CheckVessel);
+            GameEvents.onEditorRestart.Add(checklistSystem.CheckVessel);
+            GameEvents.onEditorShowPartList.Add(checklistSystem.CheckVessel);
             KCTInstalled = false;
             foreach (AssemblyLoader.LoadedAssembly assebmly in AssemblyLoader.loadedAssemblies)
                 if (assebmly.dllName == "KerbalConstructionTime")
@@ -82,7 +99,7 @@ namespace WernherChecker
                     KCTInstalled = true;
                     break;
                 }
-
+            //tooltipBGTexture.wrapMode = TextureWrapMode.Repeat;
             defaultLaunchMethod = EditorLogic.fetch.launchBtn.methodToInvoke;
             defaultLaunchBehaviour = EditorLogic.fetch.launchBtn.scriptWithMethodToInvoke;
 
@@ -90,7 +107,7 @@ namespace WernherChecker
             {
                 EditorLogic.fetch.launchBtn.methodToInvoke = null;
                 EditorLogic.fetch.launchBtn.scriptWithMethodToInvoke = null;
-                EditorLogic.fetch.launchBtn.SetInputDelegate(launchDelegate);
+                EditorLogic.fetch.launchBtn.AddInputDelegate(launchDelegate);
             }
 
             if (Settings.wantedToolbar == toolbarType.BLIZZY && ToolbarManager.ToolbarAvailable)
@@ -115,9 +132,13 @@ namespace WernherChecker
 
             GameEvents.onEditorScreenChange.Remove(onEditorPanelChange);
             GameEvents.onEditorShipModified.Remove(checklistSystem.CheckVessel);
+            GameEvents.onEditorRestart.Remove(checklistSystem.CheckVessel);
+            GameEvents.onEditorShowPartList.Remove(checklistSystem.CheckVessel);
+
             Settings.Save();
         }
 
+        #region Toolbar stuff
         void AddToolbarButton(toolbarType type, bool useStockIfProblem)
         {
             if (type == toolbarType.BLIZZY)
@@ -142,7 +163,6 @@ namespace WernherChecker
                     AddToolbarButton(toolbarType.STOCK, true);
             }
 
-
             if(type == toolbarType.STOCK)
             {
                 activeToolbar = toolbarType.STOCK;
@@ -166,6 +186,7 @@ namespace WernherChecker
             GameEvents.onGUIApplicationLauncherReady.Remove(CreateAppButton);
             GameEvents.onGUIApplicationLauncherUnreadifying.Remove(DestroyAppButton);
         }
+        #endregion
 
         void onEditorPanelChange(EditorScreen screen)
         {
@@ -197,24 +218,61 @@ namespace WernherChecker
             mousePos = Input.mousePosition;
             mousePos.y = Screen.height - mousePos.y;
             if (!minimized)
-                mainWindow = GUILayout.Window(52, mainWindow, OnWindow, "WernherChecker v0.4", windowStyle);
+                mainWindow = GUILayout.Window(1, mainWindow, OnWindow, "WernherChecker v0.4.0." + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.Revision + "dev", windowStyle);
             if (showSettings && !minimized)
-                settingsWindow = GUILayout.Window(53, settingsWindow, OnSettingsWindow, "WernherChecker - Settings", windowStyle);
-            if (checklistSelected)
-                if (checklistSystem.activeChecklist.items.Exists(i => i.paramsDisplayed))
-                    checklistSystem.paramsWindow = GUILayout.Window(3, checklistSystem.paramsWindow, checklistSystem.DrawParamsWindow, "Edit Parameters", HighLogic.Skin.window);
+                settingsWindow = GUILayout.Window(2, settingsWindow, OnSettingsWindow, "WernherChecker - Settings", windowStyle);
+            if (checklistSelected && checklistSystem.ActiveChecklist.items.Exists(i => i.paramsDisplayed) && !minimized)
+                checklistSystem.paramsWindow = GUILayout.Window(3, checklistSystem.paramsWindow, checklistSystem.DrawParamsWindow, "Edit Parameters", HighLogic.Skin.window);
+            
             mainWindow.x = Mathf.Clamp(mainWindow.x, 0, Screen.width - mainWindow.width);
             mainWindow.y = Mathf.Clamp(mainWindow.y, 0, Screen.height - mainWindow.height);
+
             if (partSelection != null && selectionInProgress)
-                partSelection.Update(mousePos);
+                partSelection.Update(mousePos);           
 
             if (Settings.lockOnHover)
             {
-                if (((!minimized && mainWindow.Contains(mousePos)) || (!minimized && showSettings && settingsWindow.Contains(mousePos))) && !InputLockManager.lockStack.ContainsKey("WernherChecker_windowLock"))
+                if (!minimized && (mainWindow.Contains(mousePos) || (showSettings && settingsWindow.Contains(mousePos)) || (checklistSystem.ActiveChecklist.items.Exists(i => i.paramsDisplayed) && checklistSystem.paramsWindow.Contains(mousePos))) && !InputLockManager.lockStack.ContainsKey("WernherChecker_windowLock"))
                     EditorLogic.fetch.Lock(true, true, true, "WernherChecker_windowLock");
-                else if (((!mainWindow.Contains(mousePos) && !settingsWindow.Contains(mousePos)) || minimized)  && InputLockManager.lockStack.ContainsKey("WernherChecker_windowLock"))
+                else if (((!mainWindow.Contains(mousePos) && !settingsWindow.Contains(mousePos) && !checklistSystem.paramsWindow.Contains(mousePos)) || minimized)  && InputLockManager.lockStack.ContainsKey("WernherChecker_windowLock"))
                     EditorLogic.fetch.Unlock("WernherChecker_windowLock");
             }
+
+            /*if (GUI.Button(new Rect(Screen.width - 150, 100, 150, 50), new GUIContent("Recheck", "refresh tooltip")))
+                checklistSystem.CheckVessel();
+            */
+            DrawToolTip(globalTooltip);
+        }
+
+        public void SetTooltipText()
+        {
+            if (Event.current.type == EventType.Repaint)
+                globalTooltip = GUI.tooltip;
+        }
+
+        void DrawToolTip(string tooltipText)
+        {
+            if (tooltipText != lastTooltip)
+                hoverTime = 0;
+            if (lastTooltip == tooltipText && Event.current.type == EventType.Repaint && tooltipText != "")
+                hoverTime += Time.deltaTime;
+
+            lastTooltip = tooltipText;
+
+            if (tooltipText == "" || hoverTime < 0.65f)
+                return;           
+            
+            //Debug.Log(tooltipText);           
+            GUIContent tooltip = new GUIContent(tooltipText);
+            Rect tooltipPosition = new Rect(mousePos.x + 15, mousePos.y + 15, 0, 0);
+            float maxw, minw;
+            tooltipStyle.CalcMinMaxWidth(tooltip, out minw, out maxw);
+            tooltipPosition.width = Math.Min(Math.Max(200, minw), maxw);
+            tooltipPosition.height = tooltipStyle.CalcHeight(tooltip, tooltipPosition.width);
+            GUI.Label(/*new Rect(EditorPanels.Instance.partsPanelWidth + 5, Screen.height - 60, 100, 60)*/tooltipPosition, tooltip, tooltipStyle);
+            GUI.depth = 0;
+
+
         }
 
         public void SelectChecklist()
@@ -222,11 +280,11 @@ namespace WernherChecker
             GUILayout.BeginVertical(boxStyle);
             foreach (Checklist checklist in checklistSystem.availableChecklists)
             {
-                if (GUILayout.Button(checklist.name, buttonStyle))
+                if (GUILayout.Button(new GUIContent(checklist.name, "Items:\n" + string.Join("\n", checklist.items.Select(x => "<color=cyan><b>–</b></color> <i>" + x.name + "</i>").ToArray())), buttonStyle))
                 {
-                    checklistSystem.activeChecklist = checklist;
+                    checklistSystem.ActiveChecklist = checklist;
                     checklistSelected = true;
-                    checklistSystem.CheckVessel(EditorLogic.fetch.ship);
+                    checklistSystem.CheckVessel();
                 }
             }
             if (checklistSystem.availableChecklists.Count == 0)
@@ -250,17 +308,17 @@ namespace WernherChecker
             settingsWindow.y = mainWindow.y;
             GUILayout.BeginVertical(GUILayout.Width(220f), GUILayout.ExpandHeight(true));
             GUILayout.BeginVertical(boxStyle);
-            settings_LockWindow = GUILayout.Toggle(settings_LockWindow, "Prevent clicking-throught", toggleStyle);
+            settings_LockWindow = GUILayout.Toggle(settings_LockWindow, new GUIContent("Prevent clicking-throught", "Lock the editor while hovering over a window"), toggleStyle);
 
             if (!KCTInstalled)
-                settings_CheckCrew = GUILayout.Toggle(settings_CheckCrew, "Check crew assignment", toggleStyle);
+                settings_CheckCrew = GUILayout.Toggle(settings_CheckCrew, new GUIContent("Check crew assignment", "Allow pre-launch crew assignment reminder"), toggleStyle);
 
             if (ToolbarManager.ToolbarAvailable)
             {
                 settings_BlizzyToolbar = GUILayout.Toggle(settings_BlizzyToolbar, settings_BlizzyToolbar ? "Use blizzy78's toolbar" : "Use stock toolbar", toggleStyle);
             }
             GUILayout.EndVertical();
-            if (GUILayout.Button("Reload data", buttonStyle))
+            if (GUILayout.Button(new GUIContent("Reload data", "Reload the config file"), buttonStyle))
             {
                 Settings.Load();
                 if(checklistSystem.LoadChecklists())
@@ -285,7 +343,7 @@ namespace WernherChecker
                     Settings.checkCrewAssignment = true;
                     EditorLogic.fetch.launchBtn.methodToInvoke = null;
                     EditorLogic.fetch.launchBtn.scriptWithMethodToInvoke = null;
-                    EditorLogic.fetch.launchBtn.SetInputDelegate(launchDelegate);
+                    EditorLogic.fetch.launchBtn.AddInputDelegate(launchDelegate);
                 }
                 //--------------------------------------------------------------------------
                 if (activeToolbar == toolbarType.BLIZZY && !settings_BlizzyToolbar)
@@ -304,6 +362,8 @@ namespace WernherChecker
             }
 
             GUILayout.EndVertical();
+
+            SetTooltipText();
         }
 
         void OnWindow(int windowID)
@@ -319,15 +379,15 @@ namespace WernherChecker
                         GUILayout.BeginHorizontal();
                         GUILayout.Label("Current checklist:");
                         GUILayout.FlexibleSpace();
-                        GUILayout.Label(checklistSystem.activeChecklist.name, labelStyle);
+                        GUILayout.Label(checklistSystem.ActiveChecklist.name, labelStyle);
                         GUILayout.EndHorizontal();
 
                         GUILayout.BeginVertical(boxStyle);
-                        for (int i = 0; i < checklistSystem.activeChecklist.items.Count; i++)
+                        for (int i = 0; i < checklistSystem.ActiveChecklist.items.Count; i++)
                         {
-                            ChecklistItem tempItem = checklistSystem.activeChecklist.items[i];
+                            ChecklistItem tempItem = checklistSystem.ActiveChecklist.items[i];
                             tempItem.DrawItem();
-                            checklistSystem.activeChecklist.items[i] = tempItem;
+                            checklistSystem.ActiveChecklist.items[i] = tempItem;
                         }
                         if (Settings.jebEnabled == true)
                         {
@@ -349,34 +409,40 @@ namespace WernherChecker
                         //⇓︾▼↓︽
                         if (showAdvanced) //Advanced options showed
                         {
-                            if (GUILayout.Button("Show settings", buttonStyle, GUILayout.Height(24f)))
+                            if (!showSettings)
                             {
-                                mainWindow.height = 0f;
-                                showSettings = true;
-                                if (activeToolbar == toolbarType.BLIZZY)
-                                    settings_BlizzyToolbar = true;
-                                else
-                                    settings_BlizzyToolbar = false;
-                                settings_CheckCrew = Settings.checkCrewAssignment;
-                                settings_LockWindow = Settings.lockOnHover;
+                                if (GUILayout.Button("Show settings", buttonStyle, GUILayout.Height(24f)))
+                                {
+                                    mainWindow.height = 0f;
+                                    showSettings = true;
+                                    if (activeToolbar == toolbarType.BLIZZY)
+                                        settings_BlizzyToolbar = true;
+                                    else
+                                        settings_BlizzyToolbar = false;
+                                    settings_CheckCrew = Settings.checkCrewAssignment;
+                                    settings_LockWindow = Settings.lockOnHover;
+                                }
                             }
 
+                            if (GUILayout.Button(new GUIContent("Recheck vessel", "Use this if the automatic checking doesn't work for some reason"), buttonStyle,GUILayout.Height(24f)))
+                                checklistSystem.CheckVessel();
+
                             GUILayout.Label("Checked area:", labelStyle);
-                            if (GUILayout.Toggle(!checkSelected, "Entire ship", toggleStyle) != !checkSelected)
+                            if (GUILayout.Toggle(!checkSelected, new GUIContent("Entire ship", "Check the entire ship"), toggleStyle) != !checkSelected)
                             {
                                 checkSelected = false;
-                                checklistSystem.CheckVessel(EditorLogic.fetch.ship);
+                                checklistSystem.CheckVessel();
                                 mainWindow.height = 0f;
                             }
-                            if (GUILayout.Toggle(checkSelected, "Selected parts", toggleStyle))
+                            if (GUILayout.Toggle(checkSelected, new GUIContent(partSelection == null || EditorLogic.RootPart == null ? "Selected parts" : "Selected parts (" + partSelection.selectedParts.Where(p => EditorLogic.fetch.ship.parts.Contains(p)).ToList().Count + ")", "Check only part of the ship (e.g. lander/booster stage)"), toggleStyle) == !checkSelected)
                             {
                                 checkSelected = true;
-                                checklistSystem.CheckVessel(EditorLogic.fetch.ship);
+                                checklistSystem.CheckVessel();
                             }
 
                             if (checkSelected && EditorLogic.RootPart != null)
                             {
-                                if (GUILayout.Button("Select parts", buttonStyle, GUILayout.Height(24f)))
+                                if (GUILayout.Button(new GUIContent("Select parts", "Select the checked parts"), buttonStyle, GUILayout.Height(24f)))
                                 {
                                     mainWindow.height = 0f;
                                     print("[WernherChecker]: Engaging selection mode");
@@ -392,7 +458,7 @@ namespace WernherChecker
 
                                 if (!selectedShowed)
                                 {
-                                    if (GUILayout.Button("Show selected parts", buttonStyle, GUILayout.Height(24f)))
+                                    if (GUILayout.Button(new GUIContent("Show selected parts", "Highlight parts selected for checking"), buttonStyle, GUILayout.Height(24f)))
                                     {
                                         if (partSelection != null)
                                         {
@@ -423,7 +489,7 @@ namespace WernherChecker
 
                         }
 
-                        if (GUILayout.Button(showAdvanced ? "︽ Fewer Options ︽" : "︾ More Options ︾", buttonStyle, GUILayout.Height(24f)))
+                        if (GUILayout.Button(new GUIContent(showAdvanced ? "︽ Fewer Options ︽" : "︾ More Options ︾", "Show/Hide advanced options"), buttonStyle, GUILayout.Height(24f)))
                         {
                             mainWindow.height = 0f;
                             showAdvanced = !showAdvanced;
@@ -431,8 +497,8 @@ namespace WernherChecker
                     }
                     else
                     {
-                        GUILayout.Label("Select parts, which should be checked by holding LMB and moving mouse", labelStyle);
-                        if (GUILayout.Button("Done", buttonStyle))
+                        GUILayout.Label("Select parts, which should be checked by holding LMB and moving mouse");
+                        if (GUILayout.Button(new GUIContent("Done", "Finish part selection"), buttonStyle))
                         {
                             mainWindow.height = 0f;
                             print("[WernherChecker]: " + partSelection.selectedParts.Count + " parts selected");
@@ -442,7 +508,7 @@ namespace WernherChecker
                             }
                             selectionInProgress = false;
                             InputLockManager.RemoveControlLock("WernherChecker_partSelection");
-                            checklistSystem.CheckVessel(EditorLogic.fetch.ship);
+                            checklistSystem.CheckVessel();
                         }
                     }
                 }
@@ -460,6 +526,7 @@ namespace WernherChecker
 
             GUILayout.EndVertical();
             GUI.DragWindow(); //making it dragable
+            SetTooltipText();
         }
     }
 }
