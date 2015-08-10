@@ -14,7 +14,7 @@ namespace WernherChecker
         }
         public Checklist activeChecklist
         {
-            get { return MainInstance.checklistSystem.activeChecklist; }
+            get { return MainInstance.checklistSystem.ActiveChecklist; }
         }
         public ChecklistSystem checklistsInstance
         {
@@ -24,11 +24,17 @@ namespace WernherChecker
         public GUIStyle labelStyle = new GUIStyle(HighLogic.Skin.label);
         public static GUIStyle checkboxStyle = new GUIStyle(HighLogic.Skin.toggle)
         {
-            active = HighLogic.Skin.toggle.normal,
-            hover = HighLogic.Skin.toggle.normal,
-            focused = HighLogic.Skin.toggle.normal,
+            normal = HighLogic.Skin.toggle.hover,
+            active = HighLogic.Skin.toggle.hover,
+            //hover = HighLogic.Skin.toggle.normal,
+            focused = HighLogic.Skin.toggle.hover,
             onActive = HighLogic.Skin.toggle.onNormal,
             onFocused = HighLogic.Skin.toggle.onNormal,
+            onHover = HighLogic.Skin.toggle.onNormal
+        };
+        public static GUIStyle manualCheckboxStyle = new GUIStyle(HighLogic.Skin.toggle)
+        {
+            onNormal = HighLogic.Skin.toggle.onHover,
             onHover = HighLogic.Skin.toggle.onNormal
         };
         public static GUIStyle settingsButtonStyle = new GUIStyle(HighLogic.Skin.button)
@@ -36,21 +42,22 @@ namespace WernherChecker
             alignment = TextAnchor.MiddleCenter,
             padding = new RectOffset(2, 2, 2, 2),
             fixedHeight = WernherChecker.buttonStyle.CalcSize(new GUIContent("abc")).y,
-            fixedWidth = WernherChecker.buttonStyle.CalcSize(new GUIContent("abc")).x
+            fixedWidth = WernherChecker.buttonStyle.CalcSize(new GUIContent("abc")).y
 
         };
 
 
         public string name;
         public bool state;
-        public bool isManual;
+        public bool isManual = false;
+        public bool allRequired = true;
         public bool paramsDisplayed;
         public List<Criterion> criteria;
 
         public void DrawItem()
         {
             GUILayout.BeginHorizontal();
-            GUILayout.Label(isManual ? "<color=#0099ffff>" + name + "</color>" : name, labelStyle);
+            GUILayout.Label(isManual ? new GUIContent("<color=#0099ffff>" + name + "</color>") : new GUIContent(name, "Criteria:\n" + string.Join("\n", criteria.Select(x => "<color=cyan><b>–</b></color> <i>" + x.parameterText + "</i>").ToArray())), labelStyle);
             GUILayout.FlexibleSpace();
             if (criteria.Any(c => c.hasParameter))
             {
@@ -80,7 +87,7 @@ namespace WernherChecker
             if (!isManual)
                 GUILayout.Toggle(state, "", checkboxStyle);
             else
-                state = GUILayout.Toggle(state, "", HighLogic.Skin.toggle);
+                state = GUILayout.Toggle(state, "", manualCheckboxStyle);
             GUILayout.EndHorizontal();
         }
 
