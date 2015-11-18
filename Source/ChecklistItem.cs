@@ -57,7 +57,7 @@ namespace WernherChecker
         public void DrawItem()
         {
             GUILayout.BeginHorizontal();
-            GUILayout.Label(isManual ? new GUIContent("<color=#0099ffff>" + name + "</color>") : new GUIContent(name, "Criteria:\n" + string.Join("\n", criteria.Select(x => "<color=cyan><b>–</b></color> <i>" + x.parameterText + "</i>").ToArray())), labelStyle);
+            GUILayout.Label(isManual ? new GUIContent("<color=#0099ffff>" + name + "</color>", "Manually controlled item") : new GUIContent(name, "Criteria:\n" + string.Join("\n", criteria.Select(x => "<color=cyan><b>–</b></color> <i>" + x.valuesFull + " " + x.measure + "</i>").ToArray())), labelStyle);
             GUILayout.FlexibleSpace();
             if (criteria.Any(c => c.hasParameter))
             {
