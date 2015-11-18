@@ -12,7 +12,7 @@ namespace WernherChecker
         public Rect selection;
         public List<Part> selectedParts = new List<Part>();
         Vector2 mousePos = Input.mousePosition;
-
+        
         public void Update(Vector2 mousePos)
         {
             if (Input.GetMouseButtonDown(0))
@@ -23,7 +23,7 @@ namespace WernherChecker
             else if (Input.GetMouseButtonUp(0))
             {
                 selectedParts.Clear();
-                foreach (Part part in EditorLogic.SortedShipList)
+                foreach (Part part in WernherChecker.VesselParts)
                 {
                     Vector3 origScreenPoint = EditorCamera.Instance.camera.WorldToScreenPoint(part.partTransform.position);
                     Vector3 correctedScreenPoint = new Vector3(origScreenPoint.x, Screen.height - origScreenPoint.y, origScreenPoint.z);
@@ -52,7 +52,7 @@ namespace WernherChecker
                 }
 
                 GUI.DrawTexture(selection, (Texture)GameDatabase.Instance.GetTexture("WernherChecker/Data/selection", false));
-                foreach (Part part in EditorLogic.SortedShipList)
+                foreach (Part part in WernherChecker.VesselParts)
                 {
                     Vector3 origScreenPoint = EditorCamera.Instance.camera.WorldToScreenPoint(part.partTransform.position);
                     Vector3 correctedScreenPoint = new Vector3(origScreenPoint.x, Screen.height - origScreenPoint.y, origScreenPoint.z);
