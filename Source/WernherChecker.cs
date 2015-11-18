@@ -50,6 +50,10 @@ namespace WernherChecker
         IButton wcbutton;
         ApplicationLauncherButton appButton;
         public Vector2 mousePos = Input.mousePosition;
+        public static List<Part> VesselParts
+        {
+            get { return EditorLogic.fetch.ship.Parts; }
+        }
 
         //Instances
         public WCSettings Settings = new WCSettings();
@@ -75,6 +79,7 @@ namespace WernherChecker
             wordWrap = true,
             alignment = TextAnchor.UpperLeft,
             normal = { background = tooltipBGTexture },
+            richText = true,
         };
 
         public void Start()
@@ -92,14 +97,12 @@ namespace WernherChecker
             GameEvents.onEditorShipModified.Add(checklistSystem.CheckVessel);
             GameEvents.onEditorRestart.Add(checklistSystem.CheckVessel);
             GameEvents.onEditorShowPartList.Add(checklistSystem.CheckVessel);
-            KCTInstalled = false;
-            foreach (AssemblyLoader.LoadedAssembly assebmly in AssemblyLoader.loadedAssemblies)
-                if (assebmly.dllName == "KerbalConstructionTime")
-                {
-                    KCTInstalled = true;
-                    break;
-                }
-            //tooltipBGTexture.wrapMode = TextureWrapMode.Repeat;
+
+            if (AssemblyLoader.loadedAssemblies.Any(a => a.dllName == "KerbalConstructionTime"))
+                KCTInstalled = true;
+            else
+                KCTInstalled = false;
+
             defaultLaunchMethod = EditorLogic.fetch.launchBtn.methodToInvoke;
             defaultLaunchBehaviour = EditorLogic.fetch.launchBtn.scriptWithMethodToInvoke;
 
@@ -218,7 +221,7 @@ namespace WernherChecker
             mousePos = Input.mousePosition;
             mousePos.y = Screen.height - mousePos.y;
             if (!minimized)
-                mainWindow = GUILayout.Window(1, mainWindow, OnWindow, "WernherChecker v0.4.0." + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.Revision + "dev", windowStyle);
+                mainWindow = GUILayout.Window(1, mainWindow, OnWindow, "WernherChecker v0.4.0"/*." + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.Revision + "dev"*/, windowStyle);
             if (showSettings && !minimized)
                 settingsWindow = GUILayout.Window(2, settingsWindow, OnSettingsWindow, "WernherChecker - Settings", windowStyle);
             if (checklistSelected && checklistSystem.ActiveChecklist.items.Exists(i => i.paramsDisplayed) && !minimized)
@@ -238,9 +241,6 @@ namespace WernherChecker
                     EditorLogic.fetch.Unlock("WernherChecker_windowLock");
             }
 
-            /*if (GUI.Button(new Rect(Screen.width - 150, 100, 150, 50), new GUIContent("Recheck", "refresh tooltip")))
-                checklistSystem.CheckVessel();
-            */
             DrawToolTip(globalTooltip);
         }
 
@@ -259,7 +259,7 @@ namespace WernherChecker
 
             lastTooltip = tooltipText;
 
-            if (tooltipText == "" || hoverTime < 0.65f)
+            if (tooltipText == "" || hoverTime < 0.5f)
                 return;           
             
             //Debug.Log(tooltipText);           
@@ -434,7 +434,7 @@ namespace WernherChecker
                                 checklistSystem.CheckVessel();
                                 mainWindow.height = 0f;
                             }
-                            if (GUILayout.Toggle(checkSelected, new GUIContent(partSelection == null || EditorLogic.RootPart == null ? "Selected parts" : "Selected parts (" + partSelection.selectedParts.Where(p => EditorLogic.fetch.ship.parts.Contains(p)).ToList().Count + ")", "Check only part of the ship (e.g. lander/booster stage)"), toggleStyle) == !checkSelected)
+                            if (GUILayout.Toggle(checkSelected, new GUIContent(partSelection == null || EditorLogic.RootPart == null ? "Selected parts (0)" : "Selected parts (" + partSelection.selectedParts.Intersect(EditorLogic.fetch.ship.parts).ToList().Count + ")", "Check only a selected section of the ship (e.g. lander/booster stage)"), toggleStyle) == !checkSelected)
                             {
                                 checkSelected = true;
                                 checklistSystem.CheckVessel();
@@ -446,25 +446,25 @@ namespace WernherChecker
                                 {
                                     mainWindow.height = 0f;
                                     print("[WernherChecker]: Engaging selection mode");
-                                    foreach (Part part in EditorLogic.SortedShipList)
+                                    foreach (Part part in VesselParts)
                                     {
                                         part.SetHighlightDefault();
                                     }
                                     partSelection = new PartSelection();
                                     selectionInProgress = true;
                                     selectedShowed = false;
-                                    InputLockManager.SetControlLock(ControlTypes.EDITOR_PAD_PICK_PLACE , "WernherChecker_partSelection");
+                                    InputLockManager.SetControlLock(ControlTypes.EDITOR_PAD_PICK_PLACE | ControlTypes.EDITOR_UI, "WernherChecker_partSelection");
                                 }
 
                                 if (!selectedShowed)
                                 {
-                                    if (GUILayout.Button(new GUIContent("Show selected parts", "Highlight parts selected for checking"), buttonStyle, GUILayout.Height(24f)))
+                                    if (GUILayout.Button(new GUIContent("Highlight selected parts", "Highlight the parts selected for checking"), buttonStyle, GUILayout.Height(24f)))
                                     {
                                         if (partSelection != null)
                                         {
                                             foreach (Part part in partSelection.selectedParts)
                                             {
-                                                if (EditorLogic.SortedShipList.Contains(part))
+                                                if (WernherChecker.VesselParts.Contains(part))
                                                 {
                                                     part.SetHighlightType(Part.HighlightType.AlwaysOn);
                                                     part.SetHighlightColor(new Color(10f, 0.9f, 0f));
@@ -478,7 +478,10 @@ namespace WernherChecker
                                 {
                                     if (GUILayout.Button("Hide selected parts", buttonStyle, GUILayout.Height(24f)))
                                     {
-                                        foreach (Part part in EditorLogic.SortedShipList)
+                                        /*float max, min;
+                                        GUI.skin.label.CalcMinMaxWidth(new GUIContent("Thisisthecontentasdsdfsdfsd"), out min, out max);
+                                        Debug.Log("Min: " + min + ", Max: " + max);*/
+                                        foreach (Part part in WernherChecker.VesselParts)
                                         {
                                             part.SetHighlightDefault();
                                         }
@@ -497,12 +500,13 @@ namespace WernherChecker
                     }
                     else
                     {
-                        GUILayout.Label("Select parts, which should be checked by holding LMB and moving mouse");
+                        GUILayout.Label("Select parts to check by holding LMB and moving mouse", labelStyle);
+                        GUILayout.Label("Current selection: " + partSelection.selectedParts.Count + " part(s)");
                         if (GUILayout.Button(new GUIContent("Done", "Finish part selection"), buttonStyle))
                         {
                             mainWindow.height = 0f;
                             print("[WernherChecker]: " + partSelection.selectedParts.Count + " parts selected");
-                            foreach (Part part in EditorLogic.SortedShipList)
+                            foreach (Part part in WernherChecker.VesselParts)
                             {
                                 part.SetHighlightDefault();
                             }
