@@ -35,10 +35,11 @@ namespace WernherChecker
         public object tempParam;
         public Type parameterType;
         public bool hasParameter;
-        public string parameterText;
+        public string valuesShortened;
+        public string measure;
         public bool paramValid;
         public string tooltip;
-        public string valuesString;
+        public string valuesFull;
         public string resourceName;
         public List<string> parts;
         public List<string> modules;
@@ -70,35 +71,40 @@ namespace WernherChecker
             {
                 case CriterionType.Module:
                     this.modules = node.GetValue("modules").Trim().Split(',').ToList<string>();
-                    this.valuesString = string.Join(", ", this.modules.ToArray());
-                    this.parameterText = this.modules.First() + (this.modules.Count == 1 ? string.Empty : ",...") + " QTY";
-                    this.tooltip = "How many of " + this.valuesString + " should your vessel contain";
+                    this.measure = "QTY";
+                    this.valuesFull = string.Join(", ", this.modules.ToArray());
+                    this.valuesShortened = this.modules.First() + (this.modules.Count == 1 ? string.Empty : ",...");
+                    this.tooltip = "How many of <b><color=#90FF3E>" + this.valuesFull + "</color></b> should your vessel contain";
                     break;
 
                 case CriterionType.Part:
                     this.parts = node.GetValue("parts").Trim().Split(',').ToList<string>();
-                    this.valuesString = string.Join(", ", this.parts.ToArray());
-                    this.parameterText = this.parts.First() + (this.parts.Count == 1 ? string.Empty : ",...") + " QTY";
-                    this.tooltip = "How many of " + this.valuesString + " should your vessel contain";
+                    this.measure = "QTY";
+                    this.valuesFull = string.Join(", ", this.parts.ToArray());
+                    this.valuesShortened = this.parts.First() + (this.parts.Count == 1 ? string.Empty : ",...");
+                    this.tooltip = "How many of <b><color=#90FF3E>" + this.valuesFull + "</color></b> should your vessel contain";
                     break;
 
                 case CriterionType.MinResourceLevel:
                     this.resourceName = node.GetValue("resourceName");
-                    this.valuesString = this.resourceName;
-                    this.parameterText = this.resourceName + " AMT";
-                    this.tooltip = "How much of " + this.valuesString + " should your vessel contain";
+                    this.measure = "AMT";
+                    this.valuesFull = this.resourceName;
+                    this.valuesShortened = this.resourceName;
+                    this.tooltip = "How much of <b><color=#90FF3E>" + this.valuesFull + "</color></b> should your vessel contain";
                     break;
                 case CriterionType.MinResourceCapacity:
                     this.resourceName = node.GetValue("resourceName");
-                    this.valuesString = this.resourceName;
-                    this.parameterText = this.resourceName + " CAPY";
-                    this.tooltip = "How much of " + this.valuesString + " should your vessel has capacity for";
+                    this.measure = "CAPY";
+                    this.valuesFull = this.resourceName;
+                    this.valuesShortened = this.resourceName;
+                    this.tooltip = "How much of <b><color=#90FF3E>" + this.valuesFull + "</color></b> should your vessel has capacity for";
                     break;
                 case CriterionType.CrewMember:
                     this.experienceTrait = node.GetValue("experienceTrait");
-                    this.valuesString = this.experienceTrait;
-                    this.parameterText = this.experienceTrait + " LVL";
-                    this.tooltip = "Minimum experience level of your " + this.valuesString;
+                    this.measure = "LVL";
+                    this.valuesFull = this.experienceTrait;
+                    this.valuesShortened = this.experienceTrait;
+                    this.tooltip = "Minimum experience level of your <b><color=#90FF3E>" + this.valuesFull + "</color></b>";
                     break;
                 case CriterionType.ContractRequirements:
                     break;
@@ -116,24 +122,6 @@ namespace WernherChecker
                 parameterType = typeof(int);
                 hasParameter = true;
             }
-            /*switch (type)
-            {
-                case CriterionType.CrewMember:
-                    parameterText = experienceTrait + " LVL";
-                    break;
-                case CriterionType.MinResourceCapacity:
-                    parameterText = resourceName + " CAPY";
-                    break;
-                case CriterionType.MinResourceLevel:
-                    parameterText = resourceName + " AMT";
-                    break;
-                case CriterionType.Module:
-                    parameterText = modules.First() + ",... QTY";
-                    break;
-                case CriterionType.Part:
-                    parameterText = parts.First() + ",... QTY";
-                    break;
-            }*/
 
             /*else if (type == CriterionType.ContractRequirements)
             {
