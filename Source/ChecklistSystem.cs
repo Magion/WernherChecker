@@ -57,8 +57,10 @@ namespace WernherChecker
                             ChecklistItem parsedItem = new ChecklistItem();
                             parsedItem.criteria = new List<Criterion>();
                             parsedItem.name = itemNode.GetValue("name");
-                            bool.TryParse(itemNode.GetValue("isManual"), out parsedItem.isManual);
-                            bool.TryParse(itemNode.GetValue("allRequired"), out parsedItem.allRequired);
+                            if (!bool.TryParse(itemNode.GetValue("isManual"), out parsedItem.isManual))
+                                parsedItem.isManual = false;
+                            if(!bool.TryParse(itemNode.GetValue("allRequired"), out parsedItem.allRequired))
+                                parsedItem.allRequired = true; ;
 
                             //Begining criterion cycle
                             foreach (ConfigNode criterionNode in itemNode.GetNodes("CRITERION"))
@@ -90,19 +92,19 @@ namespace WernherChecker
 
         public void CheckVessel(ShipConstruct ship)
         {
+            if (!MainInstance.checklistSelected)
+                return;
+
+            if (EditorLogic.RootPart == null || (MainInstance.partSelection == null && MainInstance.checkSelected))
+            {
+                ActiveChecklist.items.ForEach(i => i.state = false);
+                return;
+            }
+
             if (MainInstance.checkSelected && MainInstance.partSelection != null)
                 partsToCheck = MainInstance.partSelection.selectedParts.Intersect(ship.Parts).ToList();
             else
                 partsToCheck = ship.Parts;
-
-            if (EditorLogic.RootPart == null)
-            {
-                activeChecklist.items.ForEach(i => i.state = false);
-                return;
-            }
-
-            if (!MainInstance.checklistSelected)
-                return;
 
             for (int j = 0; j < activeChecklist.items.Count; j++)
             //foreach (ChecklistItem item in activeChecklist.items)
@@ -205,8 +207,8 @@ namespace WernherChecker
             try
             {
                 foreach (PartCrewManifest part in CMAssignmentDialog.Instance.GetManifest().GetCrewableParts().Where(p => partsToCheck.Exists(pt => pt.partInfo == p.PartInfo)))
-                {
-                    if (part.GetPartCrew().Any(c => c.experienceTrait.Title == crton.experienceTrait && c.experienceLevel >= int.Parse(crton.parameter.ToString())))
+                {               
+                    if (part.GetPartCrew().Where(c => c != null).Any(c => c.experienceTrait.Title == crton.experienceTrait && c.experienceLevel >= int.Parse(crton.parameter.ToString())))
                     {
                         //Debug.Log("Crew OK");
                         return true;
@@ -217,7 +219,7 @@ namespace WernherChecker
             }
             catch(Exception ex)
             {
-                Debug.LogWarning("[WernherChecker]: Error checking crew:\n" + ex + "\n\n<color=lime><b>Please note, that this can sometimes happen after entering the editor and attaching the part for the first time</b></color>");
+                Debug.LogWarning("[WernherChecker]: Error checking crew:\n" + ex + "\n\n<b><color=lime>Please note, that this can sometimes happen after entering the editor and attaching the part for the first time.</color> <color=#ff4444ff>If this is not the case, please, report it.</color></b>");
                 return false;
             }
         }
@@ -227,27 +229,18 @@ namespace WernherChecker
             ChecklistItem item = activeChecklist.items.Find(p => p.paramsDisplayed);
             GUILayout.BeginVertical(GUILayout.Width(200));
             GUILayout.BeginHorizontal(GUILayout.ExpandHeight(false));
-            GUILayout.Label("Item: " + item.name);
+            GUILayout.Label("Item: " + item.name + "\n<color=#ffd333ff>" + (item.allRequired ? "All criteria met required" : "One criterion met suffices") + "</color>");
             GUILayout.FlexibleSpace();
             GUILayout.Label("►");
             GUILayout.EndHorizontal();
             item.criteria.ForEach(c => c.tempParam = c.paramsGUIFunction(c));
-            /*for (int i = 0; i < item.criteria.Count; i++)
-            {
-                Criterion crton = activeChecklist.items.Find(p => p.paramsDisplayed).criteria[i];
-                crton.tempParam = crton.paramsGUIAction(crton);
-                activeChecklist.items[activeChecklist.items.FindIndex(p => p.paramsDisplayed)].criteria[i] = crton;
-            }*/
+
             if (item.criteria.TrueForAll(c => c.paramValid))
             {
                 if (GUILayout.Button("Done", HighLogic.Skin.button))
                 {
                     item.paramsDisplayed = false;
                     item.criteria.ForEach(c => c.parameter = c.tempParam);
-                    /*for (int i = 0; i < item.criteria.Count; i++)
-                    {
-                        item.criteria[i].parameter = item.criteria[i].tempParam;
-                    }*/
                     CheckVessel();
                 }
             }
@@ -268,7 +261,7 @@ namespace WernherChecker
             else
                 crton.paramValid = false;
             GUILayout.BeginHorizontal();
-            GUILayout.Label(new GUIContent(crton.parameterText, crton.tooltip), crton.paramValid ? normalLabel : orangeLabel);
+            GUILayout.Label(new GUIContent(crton.valuesShortened + " " + crton.measure, crton.tooltip), crton.paramValid ? normalLabel : orangeLabel);
             GUILayout.FlexibleSpace();
             crton.tempParam = GUILayout.TextField(crton.tempParam.ToString(), 11, HighLogic.Skin.textField, GUILayout.Width(68f));
             GUILayout.EndHorizontal();
