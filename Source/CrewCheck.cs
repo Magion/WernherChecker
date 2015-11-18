@@ -24,7 +24,7 @@ namespace WernherChecker
             if (EditorLogic.fetch.editorScreen == EditorScreen.Crew)
                 return true;
 
-                foreach (Part part in EditorLogic.SortedShipList)
+                foreach (Part part in WernherChecker.VesselParts)
                 {
                     if (part.CrewCapacity > 0)
                     {
