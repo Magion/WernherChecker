@@ -1,3 +1,17 @@
+------------- Version v0.4 (Nov. 18) -------------
+* KSP 1.0.5 support
+* Added checking for minimal resource capacity, current resource amount, crew's skills and part presence
+* Added criterion's parameters in-game editing
+* Added tooltips
+* Preformance increase - checking only if necessary
+* Changed color of the indicator lights 
+* CrewCheck test is PASS, if EditorPanel.Crew is dipslayed
+* Improved window's heigh calculations
+* Toolbar setting label shows the current state
+* Added "Try again" button to look for checklists again when no valid ones are found
+* Fixed the launch button tooltip not displaying
+* Many small tweaks
+
 ------------ Version v0.3.4 (Jan. 5) ------------
 * Added in-game settings
 * Fixed an issue causing the game to go crazy after launching an unmanned ship

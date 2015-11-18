@@ -1,19 +1,18 @@
 {
 	"NAME":"WernherChecker",
 	"URL":"https://raw.githubusercontent.com/Magion/WernherChecker/master/WernherChecker.version",
-	"DOWNLOAD":"http://kerbalstuff.com/mod/91/WernherChecker",
-	"CHANGE_LOG_URL":"https://raw.githubusercontent.com/Magion/WernherChecker/master/changelog.txt",
+	"DOWNLOAD":"https://kerbalstuff.com/mod/91/WernherChecker",
 	"VERSION":
 	{
 		"MAJOR":0,
-		"MINOR":3,
-		"PATCH":4,
+		"MINOR":4,
+		"PATCH":0,
 		"BUILD":0
 	},
 	"KSP_VERSION":
 	{
-		"MAJOR":0,
-		"MINOR":90,
-		"PATCH":0
+		"MAJOR":1,
+		"MINOR":0,
+		"PATCH":5
 	}
 }

@@ -6,13 +6,14 @@ using UnityEngine;
 
 namespace WernherChecker
 {
-    class WCSettings
+    public class WCSettings
     {
         public ConfigNode cfg;
         public bool cfgLoaded;
         public bool lockOnHover;
         public bool checkCrewAssignment;
         public bool jebEnabled;
+        public bool minimized;
         public float windowX;
         public float windowY;
         public WernherChecker.toolbarType wantedToolbar;
@@ -23,6 +24,7 @@ namespace WernherChecker
             lockOnHover = true;
             checkCrewAssignment = true;
             jebEnabled = true;
+            minimized = false;
             windowX = EditorPanels.Instance.partsPanelWidth + 3;
             windowY = 120;
             wantedToolbar = WernherChecker.toolbarType.STOCK;
@@ -66,6 +68,13 @@ namespace WernherChecker
                 //--------------------------------------------------------------------------
                 try
                 {
+                    this.minimized = bool.Parse(cfg.GetValue("minimized"));
+                    Debug.Log("[WernherChecker]: SETTINGS - Minimized: " + this.minimized.ToString());
+                }
+                catch { Debug.LogWarning("[WernherChecker]: SETTINGS - minimized field has an invalid value assigned (" + cfg.GetValue("minimized") + "). Please assign valid boolean value."); }
+                //--------------------------------------------------------------------------
+                try
+                {
                     this.windowX = float.Parse(cfg.GetValue("windowX"));
                     Debug.Log("[WernherChecker]: SETTINGS - Window X: " + this.windowX.ToString());
                 }
@@ -105,19 +114,24 @@ namespace WernherChecker
                     cfg.AddValue("checkCrewAssignment", this.checkCrewAssignment.ToString());
                 //--------------------------------------------------------------------------
                 if (cfg.HasValue("toolbarType"))
-                    cfg.SetValue("toolbarType", WernherChecker.activeToolbar.ToString());
+                    cfg.SetValue("toolbarType", WernherChecker.Instance.activeToolbar.ToString());
                 else
-                    cfg.AddValue("toolbarType", WernherChecker.activeToolbar.ToString());
+                    cfg.AddValue("toolbarType", WernherChecker.Instance.activeToolbar.ToString());
+                //--------------------------------------------------------------------------
+                if (cfg.HasValue("minimized"))
+                    cfg.SetValue("minimized", WernherChecker.Instance.minimized.ToString());
+                else
+                    cfg.AddValue("minimized", WernherChecker.Instance.minimized.ToString());
                 //--------------------------------------------------------------------------
                 if (cfg.HasValue("windowX"))
-                    cfg.SetValue("windowX", WernherChecker.mainWindow.x.ToString());
+                    cfg.SetValue("windowX", WernherChecker.Instance.mainWindow.x.ToString());
                 else
-                    cfg.AddValue("windowX", WernherChecker.mainWindow.x.ToString());
+                    cfg.AddValue("windowX", WernherChecker.Instance.mainWindow.x.ToString());
                 //--------------------------------------------------------------------------
                 if (cfg.HasValue("windowY"))
-                    cfg.SetValue("windowY", WernherChecker.mainWindow.y.ToString());
+                    cfg.SetValue("windowY", WernherChecker.Instance.mainWindow.y.ToString());
                 else
-                    cfg.AddValue("windowY", WernherChecker.mainWindow.y.ToString());
+                    cfg.AddValue("windowY", WernherChecker.Instance.mainWindow.y.ToString());
                 //--------------------------------------------------------------------------
                 cfg.Save(WernherChecker.DataPath + "WernherChecker.cfg");
             }
