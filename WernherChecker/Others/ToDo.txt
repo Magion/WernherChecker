@@ -1,0 +1,8 @@
+﻿/////// ToDo list for WernherChecker \\\\\\\
+-------------------------------------------
+* Highlight the selected parts when hovering over the Checked area: Selected Parts
+* Dishighlight selected parts when switched to Checked area: Entire ship
+* Move Checklist, ChecklistItem, Criterion loading to its constructors
+* In-game checklist editing
+* Paper-like GUIStyle
+* Check for contract requierments
