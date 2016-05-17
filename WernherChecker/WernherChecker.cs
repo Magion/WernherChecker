@@ -9,14 +9,17 @@ using System.Collections;
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
+using KSP.UI.Screens;
+using UnityEngine.Events;
 
 namespace WernherChecker
 {
     [KSPAddon(KSPAddon.Startup.EditorAny, false)]
     public class WernherChecker : MonoBehaviour
-    {   
+    {
         //Window variables
-        public Rect mainWindow = new Rect(EditorPanels.Instance.partsPanelWidth + 3, 120, 0, 0);
+        public static float panelWidth = EditorPanels.Instance.partsEditor.panelTransform.rect.xMax;
+        public Rect mainWindow = new Rect(panelWidth + 3, 120, 0, 0);
         Rect settingsWindow = new Rect();
         bool showAdvanced = false;
         bool showSettings = false;
@@ -36,9 +39,8 @@ namespace WernherChecker
         public string lastTooltip;
 
         //Other
-        string defaultLaunchMethod;
-        MonoBehaviour defaultLaunchBehaviour;
-        EZInputDelegate launchDelegate = new EZInputDelegate(CrewCheck.OnButtonInput);
+        UnityAction launchDelegate = new UnityAction(CrewCheck.OnButtonInput);
+        UnityAction defaultLaunchDelegate = new UnityAction(EditorLogic.fetch.launchVessel);
         bool KCTInstalled = false;
         public toolbarType activeToolbar;
         bool settings_BlizzyToolbar = false;
@@ -84,7 +86,7 @@ namespace WernherChecker
 
         public void Start()
         {
-            Debug.LogWarning("WernherChecker v0.4 has been loaded");
+            Debug.LogWarning("WernherChecker v0.4.1 is loading...");
             Instance = this;
             if (Settings.Load())
             {
@@ -103,14 +105,10 @@ namespace WernherChecker
             else
                 KCTInstalled = false;
 
-            defaultLaunchMethod = EditorLogic.fetch.launchBtn.methodToInvoke;
-            defaultLaunchBehaviour = EditorLogic.fetch.launchBtn.scriptWithMethodToInvoke;
-
             if (Settings.checkCrewAssignment && !KCTInstalled)
             {
-                EditorLogic.fetch.launchBtn.methodToInvoke = null;
-                EditorLogic.fetch.launchBtn.scriptWithMethodToInvoke = null;
-                EditorLogic.fetch.launchBtn.AddInputDelegate(launchDelegate);
+                EditorLogic.fetch.launchBtn.onClick.RemoveListener(defaultLaunchDelegate);
+                EditorLogic.fetch.launchBtn.onClick.AddListener(launchDelegate);
             }
 
             if (Settings.wantedToolbar == toolbarType.BLIZZY && ToolbarManager.ToolbarAvailable)
@@ -180,7 +178,7 @@ namespace WernherChecker
         {
             appButton = ApplicationLauncher.Instance.AddModApplication(MiniOff, MiniOn, null, null, null, null, ApplicationLauncher.AppScenes.VAB | ApplicationLauncher.AppScenes.SPH, (Texture)GameDatabase.Instance.GetTexture("WernherChecker/Data/icon",false));
             if (!minimized)
-                appButton.toggleButton.SetTrue(false, true);
+                appButton.SetTrue(true);
         }
 
         void DestroyAppButton(GameScenes gameScenes)
@@ -221,7 +219,7 @@ namespace WernherChecker
             mousePos = Input.mousePosition;
             mousePos.y = Screen.height - mousePos.y;
             if (!minimized)
-                mainWindow = GUILayout.Window(1, mainWindow, OnWindow, "WernherChecker v0.4.0"/*." + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.Revision + "dev"*/, windowStyle);
+                mainWindow = GUILayout.Window(1, mainWindow, OnWindow, "WernherChecker v0.4.1"/*." + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.Revision + "dev"*/, windowStyle);
             if (showSettings && !minimized)
                 settingsWindow = GUILayout.Window(2, settingsWindow, OnSettingsWindow, "WernherChecker - Settings", windowStyle);
             if (checklistSelected && checklistSystem.ActiveChecklist.items.Exists(i => i.paramsDisplayed) && !minimized)
@@ -333,17 +331,15 @@ namespace WernherChecker
                 if (!settings_CheckCrew && Settings.checkCrewAssignment)
                 {
                     Settings.checkCrewAssignment = false;
-                    EditorLogic.fetch.launchBtn.methodToInvoke = defaultLaunchMethod;
-                    EditorLogic.fetch.launchBtn.scriptWithMethodToInvoke = defaultLaunchBehaviour;
-                    EditorLogic.fetch.launchBtn.RemoveInputDelegate(launchDelegate);
+                    EditorLogic.fetch.launchBtn.onClick.RemoveListener(launchDelegate);
+                    EditorLogic.fetch.launchBtn.onClick.AddListener(defaultLaunchDelegate);
                 }
 
                 else if(settings_CheckCrew && !Settings.checkCrewAssignment)
                 {
                     Settings.checkCrewAssignment = true;
-                    EditorLogic.fetch.launchBtn.methodToInvoke = null;
-                    EditorLogic.fetch.launchBtn.scriptWithMethodToInvoke = null;
-                    EditorLogic.fetch.launchBtn.AddInputDelegate(launchDelegate);
+                    EditorLogic.fetch.launchBtn.onClick.RemoveListener(defaultLaunchDelegate);
+                    EditorLogic.fetch.launchBtn.onClick.AddListener(launchDelegate);
                 }
                 //--------------------------------------------------------------------------
                 if (activeToolbar == toolbarType.BLIZZY && !settings_BlizzyToolbar)
