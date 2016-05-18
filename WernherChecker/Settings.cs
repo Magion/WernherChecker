@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -25,7 +25,7 @@ namespace WernherChecker
             checkCrewAssignment = true;
             jebEnabled = true;
             minimized = false;
-            windowX = EditorPanels.Instance.partsPanelWidth + 3;
+            windowX = WernherChecker.panelWidth + 3;
             windowY = 120;
             wantedToolbar = WernherChecker.toolbarType.STOCK;
         }

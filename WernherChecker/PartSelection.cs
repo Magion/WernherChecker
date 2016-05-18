@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -25,7 +25,7 @@ namespace WernherChecker
                 selectedParts.Clear();
                 foreach (Part part in WernherChecker.VesselParts)
                 {
-                    Vector3 origScreenPoint = EditorCamera.Instance.camera.WorldToScreenPoint(part.partTransform.position);
+                    Vector3 origScreenPoint = EditorCamera.Instance.cam.WorldToScreenPoint(part.partTransform.position);
                     Vector3 correctedScreenPoint = new Vector3(origScreenPoint.x, Screen.height - origScreenPoint.y, origScreenPoint.z);
                     if (selection.Contains(correctedScreenPoint))
                     {
@@ -54,7 +54,7 @@ namespace WernherChecker
                 GUI.DrawTexture(selection, (Texture)GameDatabase.Instance.GetTexture("WernherChecker/Data/selection", false));
                 foreach (Part part in WernherChecker.VesselParts)
                 {
-                    Vector3 origScreenPoint = EditorCamera.Instance.camera.WorldToScreenPoint(part.partTransform.position);
+                    Vector3 origScreenPoint = EditorCamera.Instance.cam.WorldToScreenPoint(part.partTransform.position);
                     Vector3 correctedScreenPoint = new Vector3(origScreenPoint.x, Screen.height - origScreenPoint.y, origScreenPoint.z);
                     if (selection.Contains(correctedScreenPoint))
                     {

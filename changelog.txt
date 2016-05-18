@@ -1,3 +1,7 @@
+------------- Version v0.4.1 (May 18) -------------
+* KSP 1.1.2 support
+* Added new default checklists (thanks linuxgurugamer!)
+
 ------------- Version v0.4 (Nov. 18) -------------
 * KSP 1.0.5 support
 * Added checking for minimal resource capacity, current resource amount, crew's skills and part presence

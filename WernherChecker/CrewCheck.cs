@@ -1,7 +1,7 @@
+﻿using PreFlightTests;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using PreFlightTests;
 
 namespace WernherChecker
 {
@@ -9,14 +9,11 @@ namespace WernherChecker
     {
         static PreFlightCheck checks;
 
-        public static void OnButtonInput(ref POINTER_INFO ptr)
+        public static void OnButtonInput()
         {
-            if (ptr.evt == POINTER_INFO.INPUT_EVENT.TAP)
-            {
-                checks = new PreFlightCheck(Complete, Abort);
-                checks.AddTest(new CrewCheck());
-                checks.RunTests();
-            }
+            checks = new PreFlightCheck(Complete, Abort);
+            checks.AddTest(new CrewCheck());
+            checks.RunTests();
         }
        
         public bool Test()
